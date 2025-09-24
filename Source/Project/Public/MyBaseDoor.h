@@ -36,9 +36,14 @@ public:
     /** Called every frame */
     virtual void Tick(float DeltaTime) override;
 
-    /** The static mesh representing the door */
+    /** The static mesh representing the Door. */
     UPROPERTY(VisibleAnywhere)
     UStaticMeshComponent* DoorMesh;
+
+    /** The static mesh representing the Door Frame. */
+    UPROPERTY(VisibleAnywhere)
+    UStaticMeshComponent* DoorFrameMesh;
+
 
     /** The rotation of the door when closed */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")

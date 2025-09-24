@@ -4,6 +4,7 @@
 #include "MyHealthComponent.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "MyBaseWidget.h"  
 #include "MyBaseCharacter.generated.h"
 
 class UMyBaseMovementComponent;
@@ -55,6 +56,19 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = "Input")
     UInputAction* InteractAction;
+
+    // Your widget class to spawn
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<UMyBaseWidget> HealthWidgetClass;
+
+    // The instance of the widget
+    UPROPERTY()
+    UMyBaseWidget* HealthWidgetInstance;
+
+    // Health component
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health")
+    UMyHealthComponent* MyHealthComponent;
+
 
 public:
     virtual void Tick(float DeltaTime) override;

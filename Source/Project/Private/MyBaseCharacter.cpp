@@ -6,6 +6,8 @@
 #include "Camera/CameraComponent.h"
 #include "InteractiveInterface.h"
 #include "MyBaseMovementComponent.h"
+#include <MyBaseWidget.h>
+#include "MyHealthComponent.h"
 
 /**
  * Constructor for AMyBaseCharacter
@@ -86,17 +88,59 @@ AMyBaseCharacter::AMyBaseCharacter(const FObjectInitializer& ObjectInitializer) 
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
     /* Camera itself does not rotate independently */
     FollowCamera->bUsePawnControlRotation = false;
+
+	/* Add the HealthCompnoent to the Character. */
+	MyHealthComponent = CreateDefaultSubobject<UMyHealthComponent>(TEXT("MyHealthComponent"));
 }
 
 
-// Called when the level is started
 void AMyBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	/* Initalize the Movement Component. */
 	MyMovement = Cast<UMyBaseMovementComponent>(GetCharacterMovement());
+
+	// Only do UI on the owning client
+	if (!IsLocallyControlled())
+		return;
+
+	// Check if the health component exists and is valid
+	if (!IsValid(MyHealthComponent))
+	{
+		return; // Exit early because we can't update the UI without a health component
+	}
+
+	// Check if the widget class is valid (must be assigned in the Blueprint or code)
+	if (!IsValid(HealthWidgetClass))
+	{
+		return; // Exit early because we can't create a widget without a valid class
+	}
+
+	// Get the player controller that owns this character
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		// Create the actual widget instance from the class
+		HealthWidgetInstance = CreateWidget<UMyBaseWidget>(PC, HealthWidgetClass);
+
+		if (HealthWidgetInstance) // If widget creation succeeded
+		{
+			// Add the widget to the viewport so the player can see it
+			HealthWidgetInstance->AddToViewport();
+
+			// Initialize the health bar fill based on the current health percentage
+			HealthWidgetInstance->UpdateHealthBar(MyHealthComponent->GetHealthPercentage());
+
+			// Make sure the widget is visible
+			HealthWidgetInstance->SetVisibility(ESlateVisibility::Visible);
+
+			// Bind the widget's handler to the health component's OnHealthChanged delegate
+			// This ensures that the health bar updates automatically whenever the character's health changes
+			MyHealthComponent->OnHealthChanged.AddDynamic(HealthWidgetInstance, &UMyBaseWidget::OnHealthChangedHandler);
+		}
+	}
+
 }
+
 
 /* 
  * Called every frame. 

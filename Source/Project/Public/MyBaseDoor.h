@@ -36,11 +36,11 @@ public:
     /** Called every frame */
     virtual void Tick(float DeltaTime) override;
 
-    /** The static mesh representing the Door. */
+    /** The static mesh representing the door */
     UPROPERTY(VisibleAnywhere)
     UStaticMeshComponent* DoorMesh;
 
-    /** The static mesh representing the Door Frame. */
+    /** The static mesh representing the door */
     UPROPERTY(VisibleAnywhere)
     UStaticMeshComponent* DoorFrameMesh;
 

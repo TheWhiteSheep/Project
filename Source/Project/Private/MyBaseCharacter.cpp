@@ -45,7 +45,7 @@ AMyBaseCharacter::AMyBaseCharacter(const FObjectInitializer& ObjectInitializer) 
 	/* Determines if we are first person perspective or third person perspective. */
 	bIsThirdPerson = true;
 
-	 /* If true, the character will rotate to face the direction it is moving instead of the controllerâ€™s rotation. */
+	 /* If true, the character will rotate to face the direction it is moving instead of the controller’s rotation. */
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	/**
@@ -55,7 +55,7 @@ AMyBaseCharacter::AMyBaseCharacter(const FObjectInitializer& ObjectInitializer) 
 	 */
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 300.0f, 0.0f);
 
-	/* The height of the playerâ€™s viewpoint (camera) relative to the capsule bottom while crouching. */
+	/* The height of the player’s viewpoint (camera) relative to the capsule bottom while crouching. */
 	CrouchedEyeHeight = 52.0f;
 
     /* JumpZVelocity: how high the character jumps */
@@ -111,10 +111,10 @@ void AMyBaseCharacter::Tick(float DeltaTime)
 
 /*
  * Called to bind functionality to input.
- * This function sets up how the playerâ€™s input (keyboard, mouse, controller, etc.)
- * is connected to the characterâ€™s actions.
+ * This function sets up how the player’s input (keyboard, mouse, controller, etc.)
+ * is connected to the character’s actions.
  *
- * In this example, weâ€™re using the Enhanced Input system:
+ * In this example, we’re using the Enhanced Input system:
  * JumpAction: Starts jumping when pressed, stops when released.
  * MoveAction: Handles character movement each time input is triggered.
  * LookAction: Handles looking/aiming each time input is triggered.
@@ -155,8 +155,8 @@ UMyBaseMovementComponent* AMyBaseCharacter::GetMyBaseMovementComponent()
  * Handles character movement input.
  *
  * Input comes in as a 2D vector (X = right/left, Y = forward/backward).
- * We take the Controllerâ€™s rotation to figure out which direction is considered "forward."
- * We only care about the yaw so the character doesnâ€™t tilt up/down when moving.
+ * We take the Controller’s rotation to figure out which direction is considered "forward."
+ * We only care about the yaw so the character doesn’t tilt up/down when moving.
  * From that yaw, we build forward and right direction vectors.
  * Finally, we apply movement input in those directions, scaled by the input values.
  */
@@ -334,7 +334,7 @@ void AMyBaseCharacter::OnInteract()
 	// If third-person, use a defined distance; otherwise (e.g., first-person) use 120 units
 	float TraceDistance = bIsThirdPerson ? (CameraDistance + BaseInteractDistance) : BaseInteractDistance;
 
-	// The trace starts at the cameraâ€™s location
+	// The trace starts at the camera’s location
 	FVector Start = FollowCamera->GetComponentLocation();
 	// And ends forward from the camera by the trace distance
 	FVector End = Start + FollowCamera->GetForwardVector() * TraceDistance;

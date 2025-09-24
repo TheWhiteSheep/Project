@@ -7,6 +7,11 @@ UMyBaseWidget / Health System
 - Setup the widget for the locally controlled player only in AMyBaseCharacter::BeginPlay().
 - Ensured proper validation for MyHealthComponent and HealthWidgetClass to avoid crashes.
 
+AMyBaseDoor / Door System
+- Added: Door and frame models to the project content folder.
+- Implemented: Loaded door and frame static mesh assets and applied relative offsets for proper alignment.
+- Implemented: DoorFrameMesh as root and set the DoorMesh as child of the DoorFrameMesh.
+
 9/23/2025
 
 UMyBaseMovementComponent
@@ -19,8 +24,13 @@ AMyBaseCharacter
 - Added CameraDistance to control camera distance from the character; used in the interact system.
 
 AMyBaseDoor
-- Added variables to track door open/closed state.
-- Added functions to replicate door movement over the network.
+- Added ClosedRotation and OpenRotation for door states.
+- Added bIsOpen to track the door’s current state and enabled replication for networked play.
+- Added server-authoritative Server_ToggleDoor() RPC.
+- Added OnRep_IsOpen() to start smooth rotation on clients when bIsOpen changes.
+- Added GetLifetimeReplicatedProps() to replicate the door’s open state to clients.
+- Implemented: Interact_Implementation() and ToggleDoor() to handle opening/closing via players.
+- Implemented: UpdateDoorRotation() to smoothly interpolate door rotation using a timer.
 
 9/21/2025
 AMyCameraManager

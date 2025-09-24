@@ -1,0 +1,31 @@
+Added: 9/23/2025:
+
+Quick fix:
+- CrouchedHalfHeight was changed to use the function "SetCrouchedHalfHeight(60.0f);" due to API Change. 
+
+Added: 9/23/2025:
+
+AMyBaseCharacter:
+- Added: OnChangePerspective() function which lets you change camera perspective from ThirdPerson to FirstPerson.
+- Added: OnInteract() function that lets you interact with objects using a linetrace system using BaseInteractDistance and CameraDistance
+- Added: BaseInteractDistance which is the base interact when you're in first person, by default its 120.0f. When swapped to ThirdPerson CameraDistance is added onto the value.
+- Added: CameraDistance which is the distance from the Camera to the Character. This is also used in the Interact system.
+
+AMyBaseDoor:
+- Multiple variables that help dictate if the door is open or closed.
+- Multiple functions that help replicate the door movement over network.
+
+Added: 9/21/2025
+
+AMyCameraManager: 
+- Provides smooth camera movement while crouching to avoid jerky transitions.
+
+UMyBaseMovementComponent: 
+- Enables crouching by default (NavAgentProps.bCanCrouch).
+- Sets crouch height (CrouchedHalfHeight).
+- Added explanatory comments.
+- Added StartCrouching() and StopCrouching() functions to manage crouch flags manually.
+
+Fixed:
+- AMyBasePlayerController: Automatically adds the input mapping context (IMC_Default) in the constructor, eliminating the need to update it manually in the Blueprint controller.
+

@@ -31,7 +31,7 @@ AMyBaseCharacter::AMyBaseCharacter(const FObjectInitializer& ObjectInitializer) 
 	BaseInteractDistance = 120.0f;
 
     /** Set size for the collision capsule (used for physics and collisions) */
-    GetCapsuleComponent()->InitCapsuleSize(40.0f, 96.0f);
+    GetCapsuleComponent()->InitCapsuleSize(30.0f, 96.0f);
 
 	 /* Do not rotate character pitch (up/down) based on controller. */
 	bUseControllerRotationPitch = false;
@@ -45,17 +45,17 @@ AMyBaseCharacter::AMyBaseCharacter(const FObjectInitializer& ObjectInitializer) 
 	/* Determines if we are first person perspective or third person perspective. */
 	bIsThirdPerson = true;
 
-	 /* If true, the character will rotate to face the direction it is moving instead of the controller’s rotation. */
+	 /* If true, the character will rotate to face the direction it is moving instead of the controllerâ€™s rotation. */
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	/**
 	 * The speed at which the character rotates to face movement direction.
 	 * Only used if bOrientRotationToMovement is true.
-	 * In this example, the character can rotate up to 500 degrees per second.
+	 * In this example, the character can rotate up to 300 degrees per second.
 	 */
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 200.0f, 0.0f);
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 300.0f, 0.0f);
 
-	/* The height of the player’s viewpoint (camera) relative to the capsule bottom while crouching. */
+	/* The height of the playerâ€™s viewpoint (camera) relative to the capsule bottom while crouching. */
 	CrouchedEyeHeight = 52.0f;
 
     /* JumpZVelocity: how high the character jumps */
@@ -63,11 +63,11 @@ AMyBaseCharacter::AMyBaseCharacter(const FObjectInitializer& ObjectInitializer) 
     /* AirControl: how much control player has in air. */
 	GetCharacterMovement()->AirControl = 0.05f;
     /* MinAnalogWalkSpeed: minimum speed for analog input */
-    GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
+    GetCharacterMovement()->MinAnalogWalkSpeed = 20.0f;
     /* BrakingDecelerationWalking: how fast character stops on ground */
     GetCharacterMovement()->BrakingDecelerationWalking = 900.0f;
     /* BrakingDecelerationFalling: how fast character stops in air */
-    GetCharacterMovement()->BrakingDecelerationFalling = 0.0;
+    GetCharacterMovement()->BrakingDecelerationFalling = 0.0f;
 
     /** Create a camera boom (spring arm) that follows the character
      *  Pulls the camera closer if it collides with the environment
@@ -111,10 +111,10 @@ void AMyBaseCharacter::Tick(float DeltaTime)
 
 /*
  * Called to bind functionality to input.
- * This function sets up how the player’s input (keyboard, mouse, controller, etc.)
- * is connected to the character’s actions.
+ * This function sets up how the playerâ€™s input (keyboard, mouse, controller, etc.)
+ * is connected to the characterâ€™s actions.
  *
- * In this example, we’re using the Enhanced Input system:
+ * In this example, weâ€™re using the Enhanced Input system:
  * JumpAction: Starts jumping when pressed, stops when released.
  * MoveAction: Handles character movement each time input is triggered.
  * LookAction: Handles looking/aiming each time input is triggered.
@@ -155,8 +155,8 @@ UMyBaseMovementComponent* AMyBaseCharacter::GetMyBaseMovementComponent()
  * Handles character movement input.
  *
  * Input comes in as a 2D vector (X = right/left, Y = forward/backward).
- * We take the Controller’s rotation to figure out which direction is considered "forward."
- * We only care about the yaw so the character doesn’t tilt up/down when moving.
+ * We take the Controllerâ€™s rotation to figure out which direction is considered "forward."
+ * We only care about the yaw so the character doesnâ€™t tilt up/down when moving.
  * From that yaw, we build forward and right direction vectors.
  * Finally, we apply movement input in those directions, scaled by the input values.
  */
@@ -334,14 +334,15 @@ void AMyBaseCharacter::OnInteract()
 	// If third-person, use a defined distance; otherwise (e.g., first-person) use 120 units
 	float TraceDistance = bIsThirdPerson ? (CameraDistance + BaseInteractDistance) : BaseInteractDistance;
 
-	// The trace starts at the camera’s location
+	// The trace starts at the cameraâ€™s location
 	FVector Start = FollowCamera->GetComponentLocation();
 	// And ends forward from the camera by the trace distance
 	FVector End = Start + FollowCamera->GetForwardVector() * TraceDistance;
 
 	// Debug line (green) drawn in the world for 1 second to visualize the trace
-	// Only for testing — should be removed or wrapped in a debug flag before shipping
+#if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT
 	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 1.0f);
+#endif
 
 	// Perform a line trace (raycast) in the visibility channel, using our parameters
 	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params))

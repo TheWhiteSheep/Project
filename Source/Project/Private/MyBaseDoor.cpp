@@ -11,22 +11,49 @@
  */
 AMyBaseDoor::AMyBaseDoor()
 {
-    // Disable Tick() by default since door does not need to update every frame
+    // Disable ticking by default; the door does not need to update every frame
     PrimaryActorTick.bCanEverTick = false;
 
-    // Create the door mesh and set as root component
-    DoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
-    RootComponent = DoorMesh;
+    // Create the Door Frame component, which will act as the root of the actor
+    DoorFrameMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorFrameMesh"));
+    // Set the frame as the root component of this actor
+    RootComponent = DoorFrameMesh;
 
-    // Default rotations for open and closed states
+    // Create the Door component, which will be a child of the frame
+    DoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DoorMesh"));
+    // Attach the door to the frame so it moves/rotates with it
+    DoorMesh->SetupAttachment(DoorFrameMesh);
+
+    /* Load the Door Frame mesh asset from the content browser
+    ConstructorHelpers::FObjectFinder is used in the constructor to locate assets at compile time */
+    ConstructorHelpers::FObjectFinder<UStaticMesh> DoorFrameMeshAsset(TEXT("/Game/LevelPrototyping/Meshes/DoorFrame.DoorFrame"));
+    /* Load the Door mesh asset from the content browser */
+    ConstructorHelpers::FObjectFinder<UStaticMesh> DoorMeshAsset(TEXT("/Game/LevelPrototyping/Meshes/Door.Door"));
+
+    /* If the frame asset was successfully found, assign it to the frame component */
+    if (DoorFrameMeshAsset.Succeeded()) { DoorFrameMesh->SetStaticMesh(DoorFrameMeshAsset.Object); }
+
+    /* If the door asset was successfully found, assign it to the door component */
+    if (DoorMeshAsset.Succeeded()) { DoorMesh->SetStaticMesh(DoorMeshAsset.Object); }
+
+    /* Apply a relative location offset to the door so it aligns correctly
+    This is needed because the door pivot is on the corner rather than the center */
+    if (DoorMesh) { DoorMesh->SetRelativeLocation(FVector(40.f, 0.f, 0.f)); }
+
+    /*Set default rotations for door states
+    ClosedRotation = door is fully closed */
     ClosedRotation = FRotator(0.f, 0.f, 0.f);
+    /* OpenRotation = door is rotated 90 degrees open */
     OpenRotation = FRotator(0.f, 90.f, 0.f);
+
+    /* Initial door state; false = closed, true = open */
     bIsOpen = false;
 
-    // Enable replication for networked games
+    /* Enable replication so this actor's state can be seen on client and server. */
     bReplicates = true;
-    DoorMesh->SetIsReplicated(true);
 }
+
+
 
 /**
  * Called when the game starts or the actor is spawned
@@ -106,12 +133,7 @@ void AMyBaseDoor::UpdateDoorRotation()
     FRotator TargetRot = bIsOpen ? OpenRotation : ClosedRotation;
 
     // Smoothly interpolate current rotation to target rotation
-    DoorMesh->SetRelativeRotation(FMath::RInterpTo(
-        DoorMesh->GetRelativeRotation(),
-        TargetRot,
-        GetWorld()->GetDeltaSeconds(),
-        OpenSpeed
-    ));
+    DoorMesh->SetRelativeRotation(FMath::RInterpTo(DoorMesh->GetRelativeRotation(),TargetRot,GetWorld()->GetDeltaSeconds(),OpenSpeed));
 
     // Stop timer when rotation is within 0.1 degrees of target
     if (DoorMesh->GetRelativeRotation().Equals(TargetRot, 0.1f))

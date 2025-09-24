@@ -38,7 +38,7 @@ AMyBaseDoor::AMyBaseDoor()
 
     /* Apply a relative location offset to the door so it aligns correctly
     This is needed because the door pivot is on the corner rather than the center */
-    if (DoorMesh) { DoorMesh->SetRelativeLocation(FVector(40.f, 0.f, 0.f)); }
+    if (DoorMesh) { DoorMesh->SetRelativeLocation(FVector(40.0f, 0.0f, 0.0f)); }
 
     /*Set default rotations for door states
     ClosedRotation = door is fully closed */

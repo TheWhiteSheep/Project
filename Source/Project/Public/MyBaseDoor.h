@@ -40,7 +40,7 @@ public:
     UPROPERTY(VisibleAnywhere)
     UStaticMeshComponent* DoorMesh;
 
-    /** The static mesh representing the door */
+    /** The static mesh representing the doorframe. */
     UPROPERTY(VisibleAnywhere)
     UStaticMeshComponent* DoorFrameMesh;
 

@@ -1,31 +1,36 @@
-Added: 9/23/2025:
+Added: 9/24/2025
 
-Quick fix:
-- CrouchedHalfHeight was changed to use the function "SetCrouchedHalfHeight(60.0f);" due to API Change. 
+UMyBaseWidget / Health System
+- Implemented a health bar widget that dynamically updates based on the character’s health.
+- Added UpdateHealthBar(float Percent) to handle health percentage and color changes (green → yellow → orange → red depending on health).
+- Added OnHealthChangedHandler() to bind the widget to UMyHealthComponent::OnHealthChanged so the UI updates automatically whenever health changes.
+- Setup the widget for the locally controlled player only in AMyBaseCharacter::BeginPlay().
+- Ensured proper validation for MyHealthComponent and HealthWidgetClass to avoid crashes.
 
-Added: 9/23/2025:
+9/23/2025
 
-AMyBaseCharacter:
-- Added: OnChangePerspective() function which lets you change camera perspective from ThirdPerson to FirstPerson.
-- Added: OnInteract() function that lets you interact with objects using a linetrace system using BaseInteractDistance and CameraDistance
-- Added: BaseInteractDistance which is the base interact when you're in first person, by default its 120.0f. When swapped to ThirdPerson CameraDistance is added onto the value.
-- Added: CameraDistance which is the distance from the Camera to the Character. This is also used in the Interact system.
+UMyBaseMovementComponent
+- CrouchedHalfHeight was changed to use the function SetCrouchedHalfHeight() due to API change.
 
-AMyBaseDoor:
-- Multiple variables that help dictate if the door is open or closed.
-- Multiple functions that help replicate the door movement over network.
+AMyBaseCharacter
+- Added OnChangePerspective() function to switch camera perspective between ThirdPerson and FirstPerson.
+- Added OnInteract() function to interact with objects using a line trace, based on BaseInteractDistance and CameraDistance.
+- Added BaseInteractDistance (default 120.0f in FirstPerson; CameraDistance added in ThirdPerson).
+- Added CameraDistance to control camera distance from the character; used in the interact system.
 
-Added: 9/21/2025
+AMyBaseDoor
+- Added variables to track door open/closed state.
+- Added functions to replicate door movement over the network.
 
-AMyCameraManager: 
+9/21/2025
+AMyCameraManager
 - Provides smooth camera movement while crouching to avoid jerky transitions.
 
-UMyBaseMovementComponent: 
+UMyBaseMovementComponent
 - Enables crouching by default (NavAgentProps.bCanCrouch).
 - Sets crouch height (CrouchedHalfHeight).
 - Added explanatory comments.
-- Added StartCrouching() and StopCrouching() functions to manage crouch flags manually.
+- Added StartCrouching() and StopCrouching() to manage crouch flags manually.
 
-Fixed:
-- AMyBasePlayerController: Automatically adds the input mapping context (IMC_Default) in the constructor, eliminating the need to update it manually in the Blueprint controller.
-
+Fixed
+- AMyBasePlayerController automatically adds the input mapping context (IMC_Default) in the constructor, eliminating the need to update it manually in Blueprint.

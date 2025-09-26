@@ -8,6 +8,7 @@
 #include "MyBaseMovementComponent.h"
 #include <MyBaseWidget.h>
 #include "MyHealthComponent.h"
+#include "MyStaminaComponent.h"
 
 /**
  * Constructor for AMyBaseCharacter
@@ -90,6 +91,8 @@ AMyBaseCharacter::AMyBaseCharacter(const FObjectInitializer& ObjectInitializer) 
 
 	/* Add the HealthCompnoent to the Character. */
 	MyHealthComponent = CreateDefaultSubobject<UMyHealthComponent>(TEXT("MyHealthComponent"));
+	/* Add the StaminaCompnoent to the Character. */
+	MyStaminaComponent = CreateDefaultSubobject<UMyStaminaComponent>(TEXT("MyStaminaComponent"));
 }
 
 
@@ -109,8 +112,14 @@ void AMyBaseCharacter::BeginPlay()
 		return; // Exit early because we can't update the UI without a health component
 	}
 
+	// Check if the Stamina component exists and is valid
+	if (!IsValid(MyStaminaComponent))
+	{
+		return; // Exit early because we can't update the UI without a Stamina component
+	}
+
 	// Check if the widget class is valid (must be assigned in the Blueprint or code)
-	if (!IsValid(HealthWidgetClass))
+	if (!IsValid(WidgetClass))
 	{
 		return; // Exit early because we can't create a widget without a valid class
 	}
@@ -119,7 +128,7 @@ void AMyBaseCharacter::BeginPlay()
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
 		// Create the actual widget instance from the class
-		WidgetInstance = CreateWidget<UMyBaseWidget>(PC, HealthWidgetClass);
+		WidgetInstance = CreateWidget<UMyBaseWidget>(PC, WidgetClass);
 
 		if (WidgetInstance) // If widget creation succeeded
 		{
@@ -129,17 +138,22 @@ void AMyBaseCharacter::BeginPlay()
 			// Initialize the health bar fill based on the current health percentage
 			WidgetInstance->UpdateHealthBar(MyHealthComponent->GetHealthPercentage());
 
+			// Initialize the Stamina bar fill based on the current stamina percentage
+			WidgetInstance->UpdateStaminaBar(MyStaminaComponent->GetStaminaPercentage());
+
 			// Make sure the widget is visible
 			WidgetInstance->SetVisibility(ESlateVisibility::Visible);
 
 			// Bind the widget's handler to the health component's OnHealthChanged delegate
 			// This ensures that the health bar updates automatically whenever the character's health changes
 			MyHealthComponent->OnHealthChanged.AddDynamic(WidgetInstance, &UMyBaseWidget::OnHealthChangedHandler);
+
+			// Bind the widget's handler to the Stamin component's OnStaminaChanged delegate
+			// This ensures that the Stamina Bar updates automatically whenever the character's Stamina changes
+			MyStaminaComponent->OnStaminaChanged.AddDynamic(WidgetInstance, &UMyBaseWidget::OnStaminaChangedHandler);
 		}
 	}
-
 }
-
 
 /* 
  * Called every frame. 
@@ -247,7 +261,6 @@ void AMyBaseCharacter::Look(const FInputActionValue& Value)
 
 	/* Rotate the controller (and camera) up/down based on Y input */
 	AddControllerPitchInput(LookAxisVector.Y);
-
 }
 
 /*
@@ -259,7 +272,13 @@ void AMyBaseCharacter::Look(const FInputActionValue& Value)
  */
 void AMyBaseCharacter::StartSprinting()
 {
+	if (!MyStaminaComponent->HasStamina()) { return; }
+
 	MyMovement->StartSprinting();
+
+	if (!MyStaminaComponent->IsStaminaTimerActive()) {
+		MyStaminaComponent->StartStaminaManipulation();
+	}
 }
 
 /*
@@ -358,7 +377,6 @@ void AMyBaseCharacter::Server_Interact_Implementation(AActor* TargetActor)
 		IInteractiveInterface::Execute_Interact(TargetActor, this);
 	}
 }
-
 
 void AMyBaseCharacter::OnInteract()
 {

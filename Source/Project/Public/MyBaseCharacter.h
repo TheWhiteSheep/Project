@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "MyHealthComponent.h"
+#include <MyStaminaComponent.h>
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "MyBaseWidget.h"  
@@ -57,17 +58,20 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     UInputAction* InteractAction;
 
+    // Health component
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health")
+    UMyHealthComponent* MyHealthComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stamina")
+    UMyStaminaComponent* MyStaminaComponent;
+
     // Your widget class to spawn
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-    TSubclassOf<UMyBaseWidget> HealthWidgetClass;
+    TSubclassOf<UMyBaseWidget> WidgetClass;
 
     // The instance of the widget
     UPROPERTY()
     UMyBaseWidget* WidgetInstance;
-
-    // Health component
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health")
-    UMyHealthComponent* MyHealthComponent;
 
 
 public:
@@ -86,23 +90,23 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
     float CameraDistance;
 
-
-protected:
-    void Move(const FInputActionValue& Value);
-    void Look(const FInputActionValue& Value);
-
     /* Starts sprinting (tells server we want to sprinting). */
     void StartSprinting();
     /* Stops sprinting (tells server we want to stop sprinting). */
     void StopSprinting();
     /* Starts crouching (tells server we want to crouch). */
-    void StartCrouching();    
+    void StartCrouching();
     /* Stops crouching (tells server we want to uncrouch). */
     void StopCrouching();
     /* Toggles between first-person and third-person camera. */
     void OnChangePerspective();
     /* Tracks whether the player is in third-person view (client-side only). */
     bool bIsThirdPerson;
+
+protected:
+    void Move(const FInputActionValue& Value);
+    void Look(const FInputActionValue& Value);
+
     /* Server RPC: performs interaction with a target actor. */
     UFUNCTION(Server, Reliable)
     void Server_Interact(AActor* TargetActor);

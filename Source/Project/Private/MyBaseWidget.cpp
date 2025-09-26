@@ -4,6 +4,7 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include <MyHealthComponent.h>
+#include <MyStaminaComponent.h>
 
 /**
  * UpdateHealthBar
@@ -37,12 +38,6 @@ void UMyBaseWidget::UpdateHealthBar(float Percent)
     HealthBar->SetFillColorAndOpacity(NewColor);
 }
 
-/**
- * OnHealthChangedHandler
- *
- * Called when the owning character's health changes (bound to UMyHealthComponent::OnHealthChanged delegate).
- * Retrieves the latest health percentage from the character's health component and updates the health bar.
- */
 void UMyBaseWidget::OnHealthChangedHandler()
 {
     // Make sure the HealthBar is valid before attempting to modify it
@@ -60,6 +55,29 @@ void UMyBaseWidget::OnHealthChangedHandler()
                 // Get the current health percentage and update the health bar
                 float Percent = HealthComp->GetHealthPercentage();
                 UpdateHealthBar(Percent);
+            }
+        }
+    }
+}
+
+void UMyBaseWidget::UpdateStaminaBar(float Percent)
+{
+    StaminaBar->SetPercent(Percent);
+}
+
+void UMyBaseWidget::OnStaminaChangedHandler()
+{
+    if (!IsValid(StaminaBar)) return;
+
+    if (APlayerController* PC = GetOwningPlayer()) 
+    {
+        if (APawn* Pawn = PC->GetPawn())
+        {
+            if (UMyStaminaComponent* StaminaComp = Pawn->FindComponentByClass<UMyStaminaComponent>())
+            {
+                float Percent = StaminaComp->GetStaminaPercentage();
+                UpdateStaminaBar(Percent);
+                UE_LOG(LogTemp, Log, TEXT("StaminaBar was updated."));
             }
         }
     }

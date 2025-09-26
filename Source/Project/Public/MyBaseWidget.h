@@ -37,6 +37,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void UpdateHealthBar(float Percent);
 
+	UFUNCTION(BlueprintCallable, Category = "Stamina")
+	void UpdateStaminaBar(float Percent);
+
 	/**
 	 * Handler function bound to the OnHealthChanged delegate of UMyHealthComponent.
 	 *
@@ -48,6 +51,8 @@ public:
 	UFUNCTION()
 	void OnHealthChangedHandler();
 
+	UFUNCTION()
+	void OnStaminaChangedHandler();
 
 protected:
 
@@ -62,4 +67,7 @@ protected:
 	 */
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* HealthBar;
+
+	UPROPERTY(meta = (BindWidget))
+	UProgressBar* StaminaBar;
 };

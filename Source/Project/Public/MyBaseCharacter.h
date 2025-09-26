@@ -63,7 +63,7 @@ protected:
 
     // The instance of the widget
     UPROPERTY()
-    UMyBaseWidget* HealthWidgetInstance;
+    UMyBaseWidget* WidgetInstance;
 
     // Health component
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health")

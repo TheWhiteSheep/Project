@@ -72,8 +72,7 @@ AMyBaseCharacter::AMyBaseCharacter(const FObjectInitializer& ObjectInitializer) 
     GetCharacterMovement()->BrakingDecelerationFalling = 0.0f;
 
     /** Create a camera boom (spring arm) that follows the character
-     *  Pulls the camera closer if it collides with the environment
-     */
+     *  Pulls the camera closer if it collides with the environment */
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     /** Attach to character root */
     CameraBoom->SetupAttachment(RootComponent);
@@ -120,22 +119,22 @@ void AMyBaseCharacter::BeginPlay()
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
 		// Create the actual widget instance from the class
-		HealthWidgetInstance = CreateWidget<UMyBaseWidget>(PC, HealthWidgetClass);
+		WidgetInstance = CreateWidget<UMyBaseWidget>(PC, HealthWidgetClass);
 
-		if (HealthWidgetInstance) // If widget creation succeeded
+		if (WidgetInstance) // If widget creation succeeded
 		{
 			// Add the widget to the viewport so the player can see it
-			HealthWidgetInstance->AddToViewport();
+			WidgetInstance->AddToViewport();
 
 			// Initialize the health bar fill based on the current health percentage
-			HealthWidgetInstance->UpdateHealthBar(MyHealthComponent->GetHealthPercentage());
+			WidgetInstance->UpdateHealthBar(MyHealthComponent->GetHealthPercentage());
 
 			// Make sure the widget is visible
-			HealthWidgetInstance->SetVisibility(ESlateVisibility::Visible);
+			WidgetInstance->SetVisibility(ESlateVisibility::Visible);
 
 			// Bind the widget's handler to the health component's OnHealthChanged delegate
 			// This ensures that the health bar updates automatically whenever the character's health changes
-			MyHealthComponent->OnHealthChanged.AddDynamic(HealthWidgetInstance, &UMyBaseWidget::OnHealthChangedHandler);
+			MyHealthComponent->OnHealthChanged.AddDynamic(WidgetInstance, &UMyBaseWidget::OnHealthChangedHandler);
 		}
 	}
 

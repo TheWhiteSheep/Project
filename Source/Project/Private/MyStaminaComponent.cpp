@@ -219,7 +219,7 @@ void UMyStaminaComponent::StaminaTick()
 
 	/** Cache booleans to avoid repeated function calls */
 	const bool bIsSprinting = MyMovementComponent->IsSprinting();
-	const bool bHasStamina = HasStamina();
+	bHasStamina = HasStamina();
 	const bool bHasFullStamina = HasFullStamina();
 
 	/**

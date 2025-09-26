@@ -202,10 +202,13 @@ bool UMyBaseMovementComponent::IsSprinting() const
 }
 
 // Called when the player starts crouching.
-// Sets the crouch flag, which is handled by CharacterMovementComponent.
+// Sets the crouch flag, if we are not falling which is handled by CharacterMovementComponent.
 // Also disables sprinting, since crouching and sprinting cannot happen at the same time.
 void UMyBaseMovementComponent::StartCrouching()
 {
+    /* Stops the character from crouching if we are in the air. */
+    if (IsFalling()) { return; }
+
     bWantsToCrouch = true;
 
     /* Cancel sprint state when crouching begins. */
@@ -213,8 +216,11 @@ void UMyBaseMovementComponent::StartCrouching()
 }
 
 // Called when the player stops crouching.
-// Clears the crouch flag, returning the character to standing state.
+// Attempts to reset the bWantsToCrouch flag.
 void UMyBaseMovementComponent::StopCrouching()
 {
+    /*Stops unnecesscary flag reset if we were not crouching. */
+    if (!bWantsToCrouch) { return; }
+
     bWantsToCrouch = false;
 }

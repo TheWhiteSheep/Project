@@ -74,9 +74,6 @@ bool UMyStaminaComponent::CanSprint() const
 
 void UMyStaminaComponent::ServerIncreaseCurrentStamina_Implementation(float Amount)
 {
-    /** Only execute on the server */
-    if (!GetOwner()->HasAuthority()) { return; }
-
     /** Increase the current stamina by the specified amount */
     CurrentStamina += Amount;
 
@@ -92,9 +89,6 @@ void UMyStaminaComponent::ServerIncreaseCurrentStamina_Implementation(float Amou
 
 void UMyStaminaComponent::ServerDecreaseCurrentStamina_Implementation(float Amount)
 {
-    /** Only execute on the server */
-    if (!GetOwner()->HasAuthority()) { return; }
-
     /** Decrease the current stamina by the specified amount */
     CurrentStamina -= Amount;
 
@@ -110,9 +104,6 @@ void UMyStaminaComponent::ServerDecreaseCurrentStamina_Implementation(float Amou
 
 void UMyStaminaComponent::ServerSetCurrentStamina_Implementation(float Amount)
 {
-    /** Only execute on the server */
-    if (!GetOwner()->HasAuthority()) { return; }
-
     /** Set the current stamina to the specified amount */
     CurrentStamina = Amount;
 
@@ -127,9 +118,6 @@ void UMyStaminaComponent::ServerSetCurrentStamina_Implementation(float Amount)
 
 void UMyStaminaComponent::ServerSetMaximumStamina_Implementation(float Amount)
 {
-    /** Only execute on the server */
-    if (!GetOwner()->HasAuthority()) { return; }
-
     /** Ignore invalid maximum stamina values */
     if (MaximumStamina <= 0.0f) { return; }
 
@@ -142,9 +130,6 @@ void UMyStaminaComponent::ServerSetMaximumStamina_Implementation(float Amount)
 
 void UMyStaminaComponent::ServerDecreaseMaximumStamina_Implementation(float Amount)
 {
-    /** Only execute on the server */
-    if (!GetOwner()->HasAuthority()) { return; }
-
     /** Ignore invalid maximum stamina values */
     if (MaximumStamina <= 0.0f) { return; }
 
@@ -157,9 +142,6 @@ void UMyStaminaComponent::ServerDecreaseMaximumStamina_Implementation(float Amou
 
 void UMyStaminaComponent::ServerIncreaseMaximumStamina_Implementation(float Amount)
 {
-    /** Only execute on the server */
-    if (!GetOwner()->HasAuthority()) { return; }
-
     /** Increase the maximum stamina by the specified amount */
     MaximumStamina += Amount;
 

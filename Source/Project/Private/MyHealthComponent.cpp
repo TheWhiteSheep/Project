@@ -75,7 +75,6 @@ bool UMyHealthComponent::IsActorAboveHealthPercentage(float Threshold) const
 
 void UMyHealthComponent::ServerIsActorHealable_Implementation(bool bHealable)
 {
-	if (!GetOwner()->HasAuthority()) { return; }
 	if (bIsActorHealable == bHealable) { return; }
 
 	bIsActorHealable = bHealable;
@@ -83,7 +82,6 @@ void UMyHealthComponent::ServerIsActorHealable_Implementation(bool bHealable)
 
 void UMyHealthComponent::ServerSetActorDead_Implementation(bool bDead)
 {
-	if (!GetOwner()->HasAuthority()) { return; }
 	if (bIsActorDead == bDead) return;
 
 	bIsActorDead = bDead;
@@ -95,7 +93,6 @@ void UMyHealthComponent::ServerSetActorDead_Implementation(bool bDead)
 
 void UMyHealthComponent::ServerIncreaseBaseCurrentHealth_Implementation(float Amount)
 {
-	if (!GetOwner()->HasAuthority()) { return; }
 	if (!bIsActorHealable || BaseCurrentHealth <= 0.0f) { return; }
 
 	BaseCurrentHealth += Amount;
@@ -109,8 +106,6 @@ void UMyHealthComponent::ServerIncreaseBaseCurrentHealth_Implementation(float Am
 
 void UMyHealthComponent::ServerDecreaseBaseCurrentHealth_Implementation(float Amount)
 {
-	if (!GetOwner()->HasAuthority()) { return; }
-
 	BaseCurrentHealth = FMath::Max(BaseCurrentHealth - Amount, 0.0f);
 
 	UpdateHealthStatus();
@@ -118,7 +113,6 @@ void UMyHealthComponent::ServerDecreaseBaseCurrentHealth_Implementation(float Am
 
 void UMyHealthComponent::ServerSetBaseCurrentHealth_Implementation(float Amount)
 {
-	if (!GetOwner()->HasAuthority()) { return; }
 	if (!bIsActorHealable || Amount <= 0.0f) { return; }
 
 	BaseCurrentHealth = Amount;
@@ -128,7 +122,6 @@ void UMyHealthComponent::ServerSetBaseCurrentHealth_Implementation(float Amount)
 
 void UMyHealthComponent::ServerIncreaseCurrentHealth_Implementation(float Amount)
 {
-	if (!GetOwner()->HasAuthority()) { return; }
 	if (!bIsActorHealable) { return; }
 
 	CurrentHealth = FMath::Clamp(CurrentHealth + Amount, 0.0f, CurrentMaximumHealth);
@@ -137,21 +130,18 @@ void UMyHealthComponent::ServerIncreaseCurrentHealth_Implementation(float Amount
 
 void UMyHealthComponent::ServerDecreaseCurrentHealth_Implementation(float Amount)
 {
-	if (!GetOwner()->HasAuthority()) { return; }
 	CurrentHealth = FMath::Clamp(CurrentHealth - Amount, 0.0f, CurrentMaximumHealth);
 	UpdateHealthStatus();
 }
 
 void UMyHealthComponent::ServerSetCurrentHealth_Implementation(float Amount)
 {
-	if (!GetOwner()->HasAuthority()) { return; }
 	CurrentHealth = FMath::Clamp(Amount, 0.0f, CurrentMaximumHealth);
 	UpdateHealthStatus();
 }
 
 void UMyHealthComponent::ServerIncreaseCurrentMaximumHealth_Implementation(float Amount)
 {
-	if (!GetOwner()->HasAuthority()) { return; }
 	if (!bIsActorHealable) { return; }
 
 	CurrentMaximumHealth += Amount;
@@ -160,7 +150,6 @@ void UMyHealthComponent::ServerIncreaseCurrentMaximumHealth_Implementation(float
 
 void UMyHealthComponent::ServerDecreaseCurrentMaximumHealth_Implementation(float Amount)
 {
-	if (!GetOwner()->HasAuthority()) { return; }
 	CurrentMaximumHealth = FMath::Max(0.0f, CurrentMaximumHealth - Amount);
 	CurrentHealth = FMath::Min(CurrentHealth, CurrentMaximumHealth);
 
@@ -169,7 +158,6 @@ void UMyHealthComponent::ServerDecreaseCurrentMaximumHealth_Implementation(float
 
 void UMyHealthComponent::ServerSetCurrentMaximumHealth_Implementation(float Amount)
 {
-	if (!GetOwner()->HasAuthority()) { return; }
 	CurrentMaximumHealth = Amount;
 	CurrentHealth = FMath::Min(CurrentHealth, CurrentMaximumHealth);
 

@@ -49,13 +49,13 @@ public:
 	 * This allows the widget to automatically reflect health changes in real-time.
 	 */
 	UFUNCTION()
-	void OnHealthChangedHandler();
+	void OnHealthChangedHandler(float CurrentHealth, float CurrentMaximumHealth);
 
 	UFUNCTION()
-	void OnStaminaChangedHandler();
+	void OnStaminaChangedHandler(float CurrentStamina, float MaximumStamina);
+
 
 protected:
-
 	/**
 	 * HealthBar
 	 *

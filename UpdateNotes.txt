@@ -1,10 +1,40 @@
+12/28/2025:
+
+Meshes
+    ClientMesh: Configured for first-person view; adjusted position and rotation.
+    ServerMesh: Configured for remote players; hidden locally but still casts shadows for consistency.
+
+MyCharacter
+    Added: First-Person: FPSpringArm (camera arm) and FPCamera (camera)
+    Added: Third-Person: TPSpringArm (camera arm) and TPCamera (camera)
+    Fixed: First and ThirdPerson Perspectives
+    New Function: ToggleView() â€“ Switches between first- and third-person based on bIsThirdPerson.
+    New Function: ActivateFirstPerson() â€“ Activates first-person camera and adjusts mesh visibility.
+    New Function: ActivateThirdPerson() â€“ Activates third-person camera and restores mesh visibility.
+    New Boolean: bIsThirdPerson â€“ Tracks the current perspective (client-side).
+
+Health Component
+    Updated delegate to pass CurrentHealth and MaximumHealth to listeners for better UI integration.
+
+Stamina Component
+    Updated full stamina system functionality:
+    StartRegeneration() / StopRegeneration()
+    StartDraining() / StopDraining()
+    UpdateStaminaTick(), Regenerate(), ConsumeStamina()
+    Added bIsRegenerating flag to track regeneration state.
+    Updated delegate to pass CurrentStamina and MaximumStamina to listeners for better UI integration.
+
+widget
+    Updated: Stamina and Health Delegates to take in the variables
+    Updated: Stamina and Health Delegate functions. (Removed Casting)
+
 Added: 9/26/2025
 
 UMyStaminaComponent
 - Added: A new Actor Component that manages stamina. It includes replicated stamina values, functions for increasing, decreasing, and setting stamina, as well as utility functions to check if the player can sprint or has full stamina. Broadcasts events when stamina changes and supports timer-based regeneration/drain.
 
 UMyBaseWidget
-- Added: Support for displaying the player’s stamina. Introduced StaminaBar (bound to a UProgressBar in the widget) and UpdateStaminaBar() function to update its fill percentage. Added OnStaminaChangedHandler() to respond to stamina changes in real time, similar to the health bar.
+- Added: Support for displaying the playerï¿½s stamina. Introduced StaminaBar (bound to a UProgressBar in the widget) and UpdateStaminaBar() function to update its fill percentage. Added OnStaminaChangedHandler() to respond to stamina changes in real time, similar to the health bar.
 
 UMyBaseMovementComponent:
 - StartCrouching() now checks if we are not in the air before crouching.
@@ -12,7 +42,7 @@ UMyBaseMovementComponent:
 
 AMyBaseCharacter:
 - Updated: The widget property name was changed to be more readable.
-- Updated: BeginPlay() to create and bind the widget’s stamina bar (StaminaBar) to the component’s OnStaminaChanged delegate.
+- Updated: BeginPlay() to create and bind the widgetï¿½s stamina bar (StaminaBar) to the componentï¿½s OnStaminaChanged delegate.
 - Updated: StartSprinting() and StopSprinting() to check stamina and trigger the stamina manipulation timer via the component.
 - Added: Integrated UMyStaminaComponent into the character.
 - Added: Created and initialized the stamina component in the constructor.

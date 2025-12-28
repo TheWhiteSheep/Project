@@ -21,6 +21,11 @@ UMyStaminaComponent::UMyStaminaComponent()
 	bHasStamina = true;
 
 	RegenTime = 1.0f;
+
+    StaminaRegenDuration = 120.0f;
+    StaminaRegenRate = MaximumStamina / StaminaRegenDuration;
+    StaminaDrainDuration = 120.0f;
+    StaminaDrainRate = MaximumStamina / StaminaDrainDuration;
 }
 
 
@@ -80,7 +85,7 @@ void UMyStaminaComponent::ServerIncreaseCurrentStamina_Implementation(float Amou
     /** Clamp stamina at MaximumStamina and stop the timer if full */
     if (CurrentStamina >= MaximumStamina) {
         CurrentStamina = MaximumStamina;
-        StopStaminaManipulation();
+        StopRegeneration();
     }
 
     /** Update internal flags and broadcast changes */
@@ -165,76 +170,113 @@ void UMyStaminaComponent::UpdateStaminaStatus()
     bCanSprint = CanSprint();
 
     /** Broadcast an event so UI or other systems can react */
-    OnStaminaChanged.Broadcast();
+    OnStaminaChanged.Broadcast(CurrentStamina, MaximumStamina);
 }
 
-void UMyStaminaComponent::StartStaminaManipulation()
+void UMyStaminaComponent::StartRegeneration()
 {
-    /** Only start the timer if the world exists */
-    if (GetWorld()) {
-        /** Set a recurring timer that calls StaminaTick every RegenTime seconds */
-        GetWorld()->GetTimerManager().SetTimer(
-            StaminaDrainTimer,
-            this,
-            &UMyStaminaComponent::StaminaTick,
-            RegenTime,
-            true
-        );
+    // Stop any active draining
+    StopDraining();
+
+    if (!GetWorld()) return;
+
+    // Clear any existing regeneration timer
+    GetWorld()->GetTimerManager().ClearTimer(RegenTimerHandle);
+
+    // Timer interval for smooth updates (~60Hz)
+    const float Interval = 1.0f / 60.0f;
+
+    // Start looping timer
+    GetWorld()->GetTimerManager().SetTimer(
+        RegenTimerHandle,
+        this,
+        &UMyStaminaComponent::UpdateStaminaTick,
+        Interval,
+        true
+    );
+
+    bIsRegenerating = true;
+}
+
+void UMyStaminaComponent::StopRegeneration()
+{
+    if (!GetWorld()) return;
+
+    GetWorld()->GetTimerManager().ClearTimer(RegenTimerHandle);
+    bIsRegenerating = false;
+}
+
+void UMyStaminaComponent::StartDraining()
+{
+    StopRegeneration();
+
+    if (!GetWorld()) return;
+
+    GetWorld()->GetTimerManager().ClearTimer(DrainTimerHandle);
+
+    const float Interval = 1.0f / 60.0f;
+
+    GetWorld()->GetTimerManager().SetTimer(
+        DrainTimerHandle,
+        this,
+        &UMyStaminaComponent::UpdateStaminaTick,
+        Interval,
+        true
+    );
+
+    bIsRegenerating = false;
+}
+
+void UMyStaminaComponent::StopDraining()
+{
+    if (!GetWorld()) return;
+
+    GetWorld()->GetTimerManager().ClearTimer(DrainTimerHandle);
+    bIsRegenerating = true;
+}
+
+void UMyStaminaComponent::UpdateStaminaTick()
+{
+    if (!GetWorld()) return;
+
+    const float DeltaTime = 1.0f / 60.0f;
+
+    if (!bIsRegenerating)
+    {
+        ConsumeStamina(DeltaTime);
+
+        if (CurrentStamina <= 0.0f)
+        {
+            CurrentStamina = 0.0f;
+            StopDraining();
+        }
     }
-}
+    else
+    {
+        Regenerate(DeltaTime);
 
-void UMyStaminaComponent::StopStaminaManipulation()
-{
-    /** Only stop the timer if the world exists */
-    if (GetWorld()) {
-        /** Clear the recurring stamina timer */
-        GetWorld()->GetTimerManager().ClearTimer(StaminaDrainTimer);
+        if (CurrentStamina >= MaximumStamina)
+        {
+            CurrentStamina = MaximumStamina;
+            StopRegeneration();
+        }
     }
+
+    UpdateStaminaStatus();
 }
 
-void UMyStaminaComponent::StaminaTick()
+void UMyStaminaComponent::Regenerate(float DeltaTime)
 {
-	/**
-	* If OwnerCharacter and MyMovementComponent is invalid then break function.
-	*/
-	if (!OwnerCharacter || !MyMovementComponent) return;
+    if (CurrentStamina >= MaximumStamina) return;
 
-	/** Cache booleans to avoid repeated function calls */
-	const bool bIsSprinting = MyMovementComponent->IsSprinting();
-	bHasStamina = HasStamina();
-	const bool bHasFullStamina = HasFullStamina();
-
-	/**
-	 * Stop sprinting if the player is currently sprinting but out of stamina.
-	 * This prevents the player from continuing to sprint when they have no stamina left.
-	 */
-	if (bIsSprinting && !bHasStamina)
-	{
-		if (AMyBaseCharacter* MyChar = Cast<AMyBaseCharacter>(OwnerCharacter))
-		{
-			MyChar->StopSprinting();
-		}
-	}
-	/**
-	 * If the player is sprinting and has stamina, drain stamina.
-	 */
-	else if (bIsSprinting && bHasStamina)
-	{
-		ServerDecreaseCurrentStamina(1.0f);
-	}
-	/**
-	 * If the player is not sprinting and stamina is not full, regenerate stamina.
-	 * This ensures stamina gradually recovers when the player is resting.
-	 */
-	else if (!bHasFullStamina)
-	{
-		ServerIncreaseCurrentStamina(1.0f);
-	}
+    CurrentStamina = FMath::Min(CurrentStamina + StaminaRegenRate * DeltaTime, MaximumStamina);
 }
 
-bool UMyStaminaComponent::IsStaminaTimerActive()
+void UMyStaminaComponent::ConsumeStamina(float DeltaTime)
 {
-	return GetWorld()->GetTimerManager().IsTimerActive(StaminaDrainTimer);
+    if (CurrentStamina <= 0.0f) return;
+
+    CurrentStamina = FMath::Max(CurrentStamina - StaminaDrainRate * DeltaTime, 0.0f);
 }
 
 void UMyStaminaComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

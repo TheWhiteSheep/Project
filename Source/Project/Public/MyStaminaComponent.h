@@ -7,7 +7,7 @@
 #include "MyBaseMovementComponent.h"
 #include "MyStaminaComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStaminaChanged);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStaminaChanged, float, CurrentStamina, float, MaximumStamina);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECT_API UMyStaminaComponent : public UActorComponent
@@ -158,30 +158,32 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Stamina|Status")
     void UpdateStaminaStatus();
 
+    void StartRegeneration();
+
+    void StopRegeneration();
+
+    void StartDraining();
+
+    void StopDraining();
+
+    void UpdateStaminaTick();
+
+    void Regenerate(float DeltaTime);
+
+    void ConsumeStamina(float DeltaTime);
+
+    bool bIsRegenerating;
+
+    float StaminaRegenDuration;
+    float StaminaRegenRate;
+    float StaminaDrainDuration;
+    float StaminaDrainRate;
+
     /**
      * Timer handle used to repeatedly call StaminaTick() for stamina manipulation.
      */
-    FTimerHandle StaminaDrainTimer;
-
-    /**
-     * Starts the stamina manipulation timer (draining or regenerating stamina).
-     */
-    void StartStaminaManipulation();
-
-    /**
-     * Stops the stamina manipulation timer.
-     */
-    void StopStaminaManipulation();
-
-    /**
-     * Tick function called by the timer to handle stamina drain/regeneration.
-     */
-    void StaminaTick();
-
-    /**
-     * Returns true if the stamina manipulation timer is currently active.
-     */
-    bool IsStaminaTimerActive();
+    FTimerHandle DrainTimerHandle;
+    FTimerHandle RegenTimerHandle;
 
     /**
      * Cached pointer to the owning character to avoid repeated casts.

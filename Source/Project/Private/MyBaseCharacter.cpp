@@ -27,67 +27,54 @@ AMyBaseCharacter::AMyBaseCharacter(const FObjectInitializer& ObjectInitializer) 
     /** Enable Tick() for this character so it updates every frame */
     PrimaryActorTick.bCanEverTick = true;
 
-	/* The distance of your Spring Arm or how far away the camera is from you in thirdperson. */
-	CameraDistance = 300.0f;
-	
-	/* The distance in which you can interact with objects when in first person. */
-	BaseInteractDistance = 120.0f;
+	/*We set the ClientMesh to our default mesh.*/
+	ClientMesh = GetMesh();
 
-    /** Set size for the collision capsule (used for physics and collisions) */
-    GetCapsuleComponent()->InitCapsuleSize(30.0f, 96.0f);
+	// Offset the mesh downward to align it correctly with the capsule
+    ClientMesh->SetRelativeLocation(FVector(-5.0f, 0.0f, -90.f));
+    // Rotate the mesh so it faces the proper direction relative to the capsule
+	ClientMesh->SetRelativeRotation(FQuat(FRotator(0.0f, -90.0f, 0.0f)));
 
-	 /* Do not rotate character pitch (up/down) based on controller. */
-	bUseControllerRotationPitch = false;
+    /*We create another Skeletal Mesh, that the other players will see on the server.
+	This mesh will only be used for shadow affects. Client won't see this mesh at all.*/
+    ServerMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ServerMesh"));
+    /*We attach the ServerMesh to our Client Mesh.*/
+    ServerMesh->SetupAttachment(ClientMesh);
 
-	/* Do not rotate character yaw (left/right) based on controller. */
-	bUseControllerRotationYaw = false;
+    // Create a spring arm to control first-person camera pitch/yaw
+    FPSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("FPSpringArm"));
+    // Attach the spring arm to the head/neck bone of the client mesh for natural motion
+	FPSpringArm->SetupAttachment(ClientMesh, TEXT("neck_02"));
+    // Remove arm length so the camera sits directly at the bone position
+	FPSpringArm->TargetArmLength = 0.0f;
+    // Allow the players mouse/controller input to rotate the spring arm
+	FPSpringArm->bUsePawnControlRotation = true;
+	// Small positional offset to place the camera correctly inside the head
+    FPSpringArm->SetRelativeLocation(FVector(10.0f, 15.0f, 0.0f));
 
-	/* Do not rotate character roll (tilt) based on controller. */
-	bUseControllerRotationRoll = false;
+    // Create the first-person camera component
+    FPCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FPCamera"));
+    // Attach the camera to the end of the spring arm for stable FP viewing
+	FPCamera->SetupAttachment(FPSpringArm, TEXT("SpringEndpoint"));
 
-	/* Determines if we are first person perspective or third person perspective. */
-	bIsThirdPerson = true;
+    // Create a spring arm to control third-person camera positioning and rotation
+    TPSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("TPSpringArm"));
+	// Attach the spring arm to the capsule so it follows the playerï¿½s body smoothly
+    TPSpringArm->SetupAttachment(GetCapsuleComponent());
+	// Set a TargetArmLength to keep the camera at a distance behind the player
+    TPSpringArm->TargetArmLength = 250.0f;
+	// Allow the players mouse/controller input to rotate the spring arm around the character
+    TPSpringArm->bUsePawnControlRotation = true;
+	// Apply a relative location and target offset to position the camera above and behind the player for better visibility.
+    TPSpringArm->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
+    TPSpringArm->TargetOffset = (FVector(0.0, 25.0f, 40.0f));
 
-	 /* If true, the character will rotate to face the direction it is moving instead of the controller’s rotation. */
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-
-	/**
-	 * The speed at which the character rotates to face movement direction.
-	 * Only used if bOrientRotationToMovement is true.
-	 * In this example, the character can rotate up to 300 degrees per second.
-	 */
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 300.0f, 0.0f);
-
-	/* The height of the player’s viewpoint (camera) relative to the capsule bottom while crouching. */
+    // Create the third-person camera component
+    // Attach it to the end of the TPSpringArm for stable third-person viewing
+    TPCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("TPCamera"));
+    TPCamera->SetupAttachment(TPSpringArm, TEXT("SpringEndPoint"));
+	/* The height of the players viewpoint (camera) relative to the capsule bottom while crouching. */
 	CrouchedEyeHeight = 52.0f;
-
-    /* JumpZVelocity: how high the character jumps */
-    GetCharacterMovement()->JumpZVelocity = 280.0f;
-    /* AirControl: how much control player has in air. */
-	GetCharacterMovement()->AirControl = 0.05f;
-    /* MinAnalogWalkSpeed: minimum speed for analog input */
-    GetCharacterMovement()->MinAnalogWalkSpeed = 20.0f;
-    /* BrakingDecelerationWalking: how fast character stops on ground */
-    GetCharacterMovement()->BrakingDecelerationWalking = 900.0f;
-    /* BrakingDecelerationFalling: how fast character stops in air */
-    GetCharacterMovement()->BrakingDecelerationFalling = 0.0f;
-
-    /** Create a camera boom (spring arm) that follows the character
-     *  Pulls the camera closer if it collides with the environment */
-    CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-    /** Attach to character root */
-    CameraBoom->SetupAttachment(RootComponent);
-    /** Distance from character */
-    CameraBoom->TargetArmLength = CameraDistance;
-    /** Rotate boom based on controller input */
-    CameraBoom->bUsePawnControlRotation = true;
-
-    /** Creates a camera that follows the character */
-    FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-    /* We attach it to the end of the camera boom */
-    FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-    /* Camera itself does not rotate independently */
-    FollowCamera->bUsePawnControlRotation = false;
 
 	/* Add the HealthCompnoent to the Character. */
 	MyHealthComponent = CreateDefaultSubobject<UMyHealthComponent>(TEXT("MyHealthComponent"));
@@ -123,6 +110,25 @@ void AMyBaseCharacter::BeginPlay()
 	{
 		return; // Exit early because we can't create a widget without a valid class
 	}
+
+	// Hide the server mesh on the local player (only remote clients use it)
+    ServerMesh->SetHiddenInGame(true);
+	// Allow the hidden server mesh to still cast shadows for world accuracy
+    ServerMesh->bCastHiddenShadow = true;
+	// Enable shadow casting on the server mesh for consistent lighting
+    ServerMesh->CastShadow = true;
+
+    // Ensure the client mesh is visible for first-person rendering
+    // Disable shadows on the FP mesh so it doesnt cast odd artifacts
+    // Hide the head bone so the FP camera is not obstructed
+    GetMesh()->SetHiddenInGame(false);
+    GetMesh()->CastShadow = false;
+
+    /*
+	Optional: 
+	You can Toggle ThirdPerson instead if you would like ThirdPerson view.
+	*/
+	ActivateFirstPerson();
 
 	// Get the player controller that owns this character
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
@@ -168,10 +174,10 @@ void AMyBaseCharacter::Tick(float DeltaTime)
 
 /*
  * Called to bind functionality to input.
- * This function sets up how the player’s input (keyboard, mouse, controller, etc.)
- * is connected to the character’s actions.
+ * This function sets up how the players input (keyboard, mouse, controller, etc.)
+ * is connected to the characters actions.
  *
- * In this example, we’re using the Enhanced Input system:
+ * In this example, were using the Enhanced Input system:
  * JumpAction: Starts jumping when pressed, stops when released.
  * MoveAction: Handles character movement each time input is triggered.
  * LookAction: Handles looking/aiming each time input is triggered.
@@ -193,7 +199,7 @@ void AMyBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AMyBaseCharacter::OnInteract);
 
-		EnhancedInputComponent->BindAction(ChangePerspectiveAction, ETriggerEvent::Started, this, &AMyBaseCharacter::OnChangePerspective);
+		EnhancedInputComponent->BindAction(ChangePerspectiveAction, ETriggerEvent::Started, this, &AMyBaseCharacter::ToggleView);
 
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AMyBaseCharacter::StartSprinting);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AMyBaseCharacter::StopSprinting);
@@ -212,8 +218,8 @@ UMyBaseMovementComponent* AMyBaseCharacter::GetMyBaseMovementComponent()
  * Handles character movement input.
  *
  * Input comes in as a 2D vector (X = right/left, Y = forward/backward).
- * We take the Controller’s rotation to figure out which direction is considered "forward."
- * We only care about the yaw so the character doesn’t tilt up/down when moving.
+ * We take the Controllers rotation to figure out which direction is considered "forward."
+ * We only care about the yaw so the character doesnï¿½t tilt up/down when moving.
  * From that yaw, we build forward and right direction vectors.
  * Finally, we apply movement input in those directions, scaled by the input values.
  */
@@ -276,8 +282,10 @@ void AMyBaseCharacter::StartSprinting()
 
 	MyMovement->StartSprinting();
 
-	if (!MyStaminaComponent->IsStaminaTimerActive()) {
-		MyStaminaComponent->StartStaminaManipulation();
+	// Start stamina drain timer
+	if (MyStaminaComponent)
+	{
+		MyStaminaComponent->StartDraining();
 	}
 }
 
@@ -291,6 +299,12 @@ void AMyBaseCharacter::StartSprinting()
 void AMyBaseCharacter::StopSprinting()
 {
 	MyMovement->StopSprinting();
+
+	// Start stamina regeneration timer
+	if (MyStaminaComponent)
+	{
+		MyStaminaComponent->StartRegeneration();
+	}
 }
 
 /*
@@ -317,51 +331,55 @@ void AMyBaseCharacter::StopCrouching()
 	MyMovement->StopCrouching();
 }
 
-/* Toggles between first - person and third - person perspectives.
-* In first-person: camera attaches to the head bone, and character rotates with camera yaw.
-* In third-person: camera attaches to the spring arm, and character rotates with movement direction. */
-void AMyBaseCharacter::OnChangePerspective()
+/*
+ * Toggles the character camera view between first-person and third-person.
+ *
+ * ToggleView(): If the character is currently in third-person view, this activates the first-person view.
+ * Otherwise, it activates the third-person view.
+ *
+ * This is called when the view toggle input is triggered.
+ */
+void AMyBaseCharacter::ToggleView()
 {
-	if (bIsThirdPerson)
-	{
-		// Attach the camera directly to the character's head bone
-		FollowCamera->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName("head"));
+    if (bIsThirdPerson) 
+    {
+        ActivateFirstPerson(); 
+    } else 
+    { 
+        ActivateThirdPerson(); 
+    }
+}
 
-		// Allow the camera to rotate based on controller input (yaw/pitch)
-		FollowCamera->bUsePawnControlRotation = true;
+/*
+ * Activates the first-person camera view for the character.
+ *
+ * Enables the first-person camera, disables the third-person camera,
+ * and hides the character's head mesh to prevent visual clipping.
+ *
+ * Updates the view state to indicate the character is no longer in third-person.
+ */
+void AMyBaseCharacter::ActivateFirstPerson()
+{
+    FPCamera->SetActive(true);
+    TPCamera->SetActive(false);
+    GetMesh()->HideBoneByName("Head", EPhysBodyOp::PBO_None);
+    bIsThirdPerson = false;
+}
 
-		// Apply a small relative offset so the camera isn't exactly inside the head
-		FollowCamera->SetRelativeLocation(FVector(0.0f, 10.0f, 0.0f));
-
-		// Make the whole character rotate with the controller's yaw
-		bUseControllerRotationYaw = true;
-
-		// Disable rotation based on movement direction (since rotation is now manual)
-		GetCharacterMovement()->bOrientRotationToMovement = false;
-
-		// Update state: character is no longer in third person
-		bIsThirdPerson = false;
-	}
-	else
-	{
-		// Reattach the camera back onto the spring arm (CameraBoom)
-		FollowCamera->AttachToComponent(CameraBoom, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-
-		// Do not let the camera itself rotate from controller input (spring arm handles it)
-		FollowCamera->bUsePawnControlRotation = false;
-
-		// Reset relative location so the camera is positioned correctly on the boom
-		FollowCamera->SetRelativeLocation(FVector::ZeroVector);
-
-		// Character no longer rotates directly with the camera
-		bUseControllerRotationYaw = false;
-
-		// Character rotation will follow the movement direction instead
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-
-		// Update state: character is now in third person
-		bIsThirdPerson = true;
-	}
+/*
+ * Activates the third-person camera view for the character.
+ *
+ * Disables the first-person camera, enables the third-person camera,
+ * and unhides the character's head mesh.
+ *
+ * Updates the view state to indicate the character is now in third-person.
+ */
+void AMyBaseCharacter::ActivateThirdPerson()
+{
+    FPCamera->SetActive(false);
+    TPCamera->SetActive(true);
+    GetMesh()->UnHideBoneByName("Head");
+    bIsThirdPerson = true;
 }
 
 void AMyBaseCharacter::Server_Interact_Implementation(AActor* TargetActor)
@@ -391,14 +409,30 @@ void AMyBaseCharacter::OnInteract()
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
 
-	// Pick different interaction distances depending on view mode
-	// If third-person, use a defined distance; otherwise (e.g., first-person) use 120 units
-	float TraceDistance = bIsThirdPerson ? (CameraDistance + BaseInteractDistance) : BaseInteractDistance;
+	/*Store a reference to an empty Active Camera. 
+	This will be set based on our ThirdPerson boolean.*/
+	UCameraComponent* ActiveCamera = nullptr;
 
-	// The trace starts at the camera’s location
-	FVector Start = FollowCamera->GetComponentLocation();
-	// And ends forward from the camera by the trace distance
-	FVector End = Start + FollowCamera->GetForwardVector() * TraceDistance;
+	if (bIsThirdPerson) 
+	{
+		ActiveCamera = TPCamera;
+	}
+	else
+	{
+		ActiveCamera = FPCamera;
+	}
+	/*Create a new float to store the Interact Distance.*/
+	float TraceDistance = InteractDistance;
+
+	/*If we are thirdPerson then we add onto the interact distance from the Camera.
+	This is done because ThirdPerson Camera sets further back then the FirstPersons Camera.*/
+	if (bIsThirdPerson)
+	{
+		TraceDistance += TPSpringArm->TargetArmLength;
+	}
+
+	const FVector Start = ActiveCamera->GetComponentLocation();
+	const FVector End = Start + ActiveCamera->GetForwardVector() * TraceDistance;
 
 	// Debug line (green) drawn in the world for 1 second to visualize the trace
 #if UE_BUILD_DEBUG || UE_BUILD_DEVELOPMENT

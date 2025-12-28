@@ -3,8 +3,6 @@
 #include "MyBaseWidget.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
-#include <MyHealthComponent.h>
-#include <MyStaminaComponent.h>
 
 /**
  * UpdateHealthBar
@@ -38,7 +36,12 @@ void UMyBaseWidget::UpdateHealthBar(float Percent)
     HealthBar->SetFillColorAndOpacity(NewColor);
 }
 
-void UMyBaseWidget::OnHealthChangedHandler()
+void UMyBaseWidget::UpdateStaminaBar(float Percent)
+{
+    StaminaBar->SetPercent(Percent);
+}
+
+void UMyBaseWidget::OnHealthChangedHandler(float CurrentHealth, float CurrentMaximumHealth)
 {
     // Make sure the HealthBar is valid before attempting to modify it
     if (!IsValid(HealthBar)) return;
@@ -49,23 +52,12 @@ void UMyBaseWidget::OnHealthChangedHandler()
         // Get the pawn (character) controlled by this player
         if (APawn* Pawn = PC->GetPawn())
         {
-            // Find the health component attached to the pawn
-            if (UMyHealthComponent* HealthComp = Pawn->FindComponentByClass<UMyHealthComponent>())
-            {
-                // Get the current health percentage and update the health bar
-                float Percent = HealthComp->GetHealthPercentage();
-                UpdateHealthBar(Percent);
-            }
+            UpdateHealthBar(CurrentHealth / CurrentMaximumHealth);
         }
     }
 }
 
-void UMyBaseWidget::UpdateStaminaBar(float Percent)
-{
-    StaminaBar->SetPercent(Percent);
-}
-
-void UMyBaseWidget::OnStaminaChangedHandler()
+void UMyBaseWidget::OnStaminaChangedHandler(float CurrentStamina, float MaximumStamina)
 {
     if (!IsValid(StaminaBar)) return;
 
@@ -73,12 +65,8 @@ void UMyBaseWidget::OnStaminaChangedHandler()
     {
         if (APawn* Pawn = PC->GetPawn())
         {
-            if (UMyStaminaComponent* StaminaComp = Pawn->FindComponentByClass<UMyStaminaComponent>())
-            {
-                float Percent = StaminaComp->GetStaminaPercentage();
-                UpdateStaminaBar(Percent);
-                UE_LOG(LogTemp, Log, TEXT("StaminaBar was updated."));
-            }
+            UpdateStaminaBar(CurrentStamina/MaximumStamina);
+            UE_LOG(LogTemp, Log, TEXT("StaminaBar was updated."));
         }
     }
 }

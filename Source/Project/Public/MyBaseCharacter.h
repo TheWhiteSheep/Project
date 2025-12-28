@@ -24,13 +24,29 @@ public:
 protected:
     virtual void BeginPlay() override;
 
-    /** Camera boom positioning the camera behind the character */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-    USpringArmComponent* CameraBoom;
+    /*This mesh will be visible to others on the server.*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
+	USkeletalMeshComponent* ServerMesh;
 
-    /** Follow camera */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-    UCameraComponent* FollowCamera;
+    /*This mesh will only be visible to you in first and third person.*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
+	USkeletalMeshComponent* ClientMesh;
+
+    /*The Camera Arm that will be used when in FirstPerson View or Perspective.*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	USpringArmComponent* FPSpringArm;
+
+    /*The Camera that will be used when in FirstPerson View or Perspective.*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UCameraComponent* FPCamera;
+
+    /*The Camera Arm that will be used when in ThirdPerson View or Perspective.*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	USpringArmComponent* TPSpringArm;
+
+    /*The Camera that will be used when in ThirdPerson View or Perspective.*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UCameraComponent* TPCamera;
 
     /** Custom Movement Component */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom Movement", meta = (AllowPrivateAccess = "true"))
@@ -84,11 +100,7 @@ public:
     /* The distance at which the character interacts with the object in first person. 
     When in ThirdPerson it also adds on the CameraDistance. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
-    float BaseInteractDistance;
-    
-    /* The distance at which the camera sits away from the Character in ThirdPerson. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-    float CameraDistance;
+    float InteractDistance = 120.f;
 
     /* Starts sprinting (tells server we want to sprinting). */
     void StartSprinting();
@@ -98,10 +110,15 @@ public:
     void StartCrouching();
     /* Stops crouching (tells server we want to uncrouch). */
     void StopCrouching();
-    /* Toggles between first-person and third-person camera. */
-    void OnChangePerspective();
+    /* Toggles between perspectives:
+    Calls ActivateFirstPerson or ActivateThirdPerson based on the bIsThirdPerson boolean*/
+    void ToggleView();
+    /*Toggles the first person perspective for the player and changes cameras.*/
+    void ActivateFirstPerson();
+    /*Toggles the ThirdPerson perspective for the player and chagnes cameras.*/
+    void ActivateThirdPerson();
     /* Tracks whether the player is in third-person view (client-side only). */
-    bool bIsThirdPerson;
+	bool bIsThirdPerson = false;
 
 protected:
     void Move(const FInputActionValue& Value);

@@ -168,7 +168,7 @@ void UMyHealthComponent::UpdateHealthStatus()
 {
 	bIsActorDead = IsActorDead();
 
-	OnHealthChanged.Broadcast();
+	OnHealthChanged.Broadcast(CurrentHealth, CurrentMaximumHealth);
 }
 
 float UMyHealthComponent::GetHealthPercentage() const
